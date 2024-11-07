@@ -1,34 +1,46 @@
 using Symbolics
+using BenchmarkTools
 
 @variables x
 
-p = prod(x - Float64(i) for i in 1:20)
-p_fact = expand(p)
+q = prod(x - i for i in 1:30)
+q_exact = expand(q)
 
-q = prod(x - i for i in 1:20)
-q_fact = expand(q)
+p = prod(x - Float64(i) for i in 1:30);
+p_float_64 = expand(p);
+
 
 setprecision(BigFloat, 128) do
-    r = prod(x - BigFloat(i) for i in 1:20)
-    r_fact = expand(r)
+    r = prod(x - BigFloat(i) for i in 1:30);
+    global r_float_128 = expand(r);
 end
 
 setprecision(BigFloat, 256) do
-    s = prod(x - BigFloat(i) for i in 1:20)
-    s_fact = expand(s)
+    s = prod(x - BigFloat(i) for i in 1:30);
+    global s_float_256 = expand(s);
 end
 
-p_fact
-r_fact
-s_fact
 
-for j in 1:20
-    err_simb = substitute(q_fact, x => j)
-    err_float = substitute(p_fact, x => Float64(j))
-    err_Bfloat_256 = substitute(r_fact, x => BigFloat(j))
+
+for j in 1:30
+    println("x = $j")
+    
+    err_exact = substitute(q_exact, x => j)
+    println("err_exact = ", err_exact)
+    
+    err_float_64 = substitute(p_float_64, x => Float64(j))
+    println("err_float_64 = ", err_float_64)
+    
     setprecision(BigFloat, 128) do 
-        err_Bfloat_128 = substitute(s_fact, x => BigFloat(j))   
+        err_Bfloat_128 = substitute(r_float_128, x => BigFloat(j))
+        println("err_Bfloat_128 = ", err_Bfloat_128)   
     end
-    setpresicion(BigFloat, 256)
-    println("x = $j", "\t", "err_simb = ", err_simb, "\t", "err_Bfloat_256 = ", err_Bfloat_256, "\t", "err_Bfloat_128 = ", err_Bfloat_128, "\t", "err_float_64 = ", err_float)
+    
+    setprecision(BigFloat, 256) do 
+    err_Bfloat_256 = substitute(s_float_256, x => BigFloat(j))
+    println("err_Bfloat_256 = ", err_Bfloat_256)
+    end
+    
+    println("================================")
+    println()
 end
